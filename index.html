@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caccia al Tesoro GPS – Luino</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+ integrity="sha256-sA+4pvAEnH6TEx9dS3Yciw+Q2tHfYwHn3Fv2C7xu+kM=" crossorigin=""/>
+<style>
+  body, html { margin:0; height:100%; }
+  #map { width:100%; height:100%; }
+  #popupQuiz {
+    position: absolute;
+    top: 50%; left:50%;
+    transform: translate(-50%,-50%);
+    background: rgba(255,255,255,0.95);
+    padding:20px;
+    border-radius:10px;
+    display:none;
+    max-width:320px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    text-align:center;
+  }
+  #popupQuiz input { width:80%; padding:6px; font-size:16px; margin-top:6px; }
+  #popupQuiz button { margin-top:8px; padding:6px 12px; }
+  #scoreboard {
+    position:absolute; top:10px; left:10px;
+    background: rgba(0,0,0,0.6);
+    color:#fff; padding:8px 12px;
+    border-radius:6px;
+  }
+  #finalMessage {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.8);
+    color:#fff; display:none;
+    align-items:center; justify-content:center;
+    text-align:center;
+    padding:20px;
+    font-size:18px;
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="scoreboard">
+  Tappe completate: <span id="score">0</span>/3
+</div>
+
+<div id="popupQuiz">
+  <h3 id="quizTitle">Enigma</h3>
+  <p id="quizText"></p>
+  <input id="quizAnswer" type="text" placeholder="Soluzione positiva">
+  <br>
+  <button id="submitAnswer">Invia</button>
+  <p id="feedback" style="color:red; display:none;"></p>
+</div>
+
+<div id="finalMessage">
+  <h1>Missione completata!</h1>
+  <p>Hai trovato tutti gli indizi! Ora recati al punto d'incontro prestabilito.</p>
+  <p><strong>Punto d'incontro:</strong> Cortile della scuola</p>
+  <button onclick="location.reload()">Rigioca</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+ integrity="sha256-oCem7Wrp2H0fjA6u+9yPq8R9Q64q7YhO48eRj6V+o9w=" crossorigin=""></script>
+
+<script>
+// --- TAPPE SUGGERITE NEL CENTRO DI LUINO ---
+const puzzles = [
+  {
+    id:'piazza',
+    title:'Il mistero dei lampioni di Piazza Garibaldi',
+    text:'Passeggiando per la piazza noti due lampioni. L’equazione completa è x² - 2x - 8 = 0. Scrivi solo la soluzione positiva.',
+    lat:46.0020,
+    lon:8.7440,
+    positiveRoot:4
+  },
+  {
+    id:'lungolago',
+    title:'Il tomo nascosto lungo il Lungolago',
+    text:'Tra panchine e fiori si trova un tomo. L’equazione è x² - 5x + 6 = 0. Scrivi solo la soluzione positiva.',
+    lat:46.0030,
+    lon:8.7470,
+    positiveRoot:3
+  },
+  {
+    id:'fontana',
+    title:'La spirale segreta alla Fontana',
+    text:'Davanti alla fontana una spirale segue una regola antica: x² - 16 = 0. Scrivi solo la soluzione positiva.',
+    lat:46.0015,
+    lon:8.7425,
+    positiveRoot:4
+  }
+];
+
+let completed = 0;
+let currentPuzzle = null;
+
+const map = L.map('map').setView([46.0019, 8.7442], 16); // Luino centro
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19,
+  attribution:'© OpenStreetMap'
+}).addTo(map);
+
+const userMarker = L.marker([0,0]).addTo(map);
+
+puzzles.forEach(p => {
+  p.marker = L.circleMarker([p.lat,p.lon],{radius:12,color:'red'}).addTo(map);
+});
+
+function showQuiz(puzzle){
+  currentPuzzle = puzzle;
+  document.getElementById('quizTitle').textContent = puzzle.title;
+  document.getElementById('quizText').textContent = puzzle.text;
+  document.getElementById('quizAnswer').value = '';
+  document.getElementById('feedback').style.display = 'none';
+  document.getElementById('popupQuiz').style.display = 'block';
+}
+
+document.getElementById('submitAnswer').addEventListener('click', ()=>{
+  const val = parseFloat(document.getElementById('quizAnswer').value.replace(',', '.'));
+  if(val === currentPuzzle.positiveRoot){
+    document.getElementById('popupQuiz').style.display = 'none';
+    completed++;
+    document.getElementById('score').textContent = completed;
+    currentPuzzle.marker.setStyle({color:'green'});
+    if(completed === puzzles.length){
+      document.getElementById('finalMessage').style.display = 'flex';
+    }
+  } else {
+    const fb = document.getElementById('feedback');
+    fb.textContent = 'Risposta errata, riprova!';
+    fb.style.display = 'block';
+  }
+});
+
+// geolocalizzazione
+map.locate({watch:true, setView:false});
+
+map.on('locationfound', e => {
+  userMarker.setLatLng(e.latlng);
+  puzzles.forEach(p=>{
+    if(!p.completed){
+      const d = map.distance(e.latlng, L.latLng(p.lat,p.lon));
+      if(d<10){ // distanza minima 10 metri
+        showQuiz(p);
+        p.completed = true;
+      }
+    }
+  });
+});
+
+map.on('locationerror', e=>{
+  alert('Impossibile ottenere la posizione GPS. Controlla le impostazioni del tuo dispositivo.');
+});
+</script>
+
+</body>
+</html>
+
