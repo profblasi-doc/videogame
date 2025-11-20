@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caccia al Tesoro Matematica</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: linear-gradient(120deg, #1a1a2e, #162447);
+      font-family: 'Press Start 2P', cursive;
+      color: #ffffff;
+    }
+
+    h1 {
+      position: absolute;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      font-size: 1.5rem;
+      color: #ffdd55;
+      text-shadow: 0 0 10px #ffdd55;
+    }
+
+    .symbol {
+      position: absolute;
+      font-size: 20px;
+      font-weight: bold;
+      color: #00ffea;
+      user-select: none;
+      pointer-events: none;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(360deg); opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 Caccia al Tesoro Matematica! 🌟</h1>
+
+  <script>
+    const symbols = ['1','2','3','4','5','6','7','8','9','+','-','×','÷','√','π','∑','θ'];
+    const body = document.body;
+
+    function createSymbol() {
+      const span = document.createElement('span');
+      span.className = 'symbol';
+      span.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      span.style.left = Math.random() * window.innerWidth + 'px';
+      span.style.fontSize = 15 + Math.random() * 30 + 'px';
+      span.style.animationDuration = 3 + Math.random() * 5 + 's';
+      body.appendChild(span);
+
+      setTimeout(() => {
+        body.removeChild(span);
+      }, 8000); // durata simbolo prima di scomparire
+    }
+
+    setInterval(createSymbol, 200); // crea un simbolo ogni 200ms
+  </script>
+</body>
+</html>
